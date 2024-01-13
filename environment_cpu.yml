@@ -1,0 +1,15 @@
+name: translation-search-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10.13
+  - faiss-cpu=1.7.4
+  - pip=23.3.1
+  - pip:
+    - "git+https://github.com/lucadiliello/bleurt-pytorch.git"
+    - datasets==2.16.1
+    - evaluate==0.4.1
+    - nltk==3.8.1
+    - sentence-transformers==2.2.2
+    - transformers==4.36.2
