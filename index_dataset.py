@@ -1,12 +1,7 @@
 import argparse
-from sentence_transformers import SentenceTransformer
 from faiss import IndexFlatIP, write_index
-from utils import load_dataset_index
+from utils import load_dataset_index, load_embeddings_model
 import logging
-
-# carregar modelo
-model_name = 'LaBSE'
-model = SentenceTransformer(model_name)
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Program to index a raw database in a FAISS vector database.')
@@ -18,16 +13,25 @@ def parse_args():
   return args
 
 def index(path, target, sample, output):
+  # Load dataset
   logging.info(f'Loading dataset from {path}')
   df = load_dataset_index(path)
   df = df[[target]]
   df_db = df.iloc[:sample] if sample is not None else df
+  
+  # Load model
+  logging.info('Loading embeddings model')
+  model = load_embeddings_model()
+  
   logging.info('Start creating embeddings')
   embeddings = model.encode(df_db[target], batch_size=32, show_progress_bar=True)
   _, d = embeddings.shape
+  
+  # Add vectors to FAISS
   logging.info('Done! Adding results to FAISS')
-  index_target = IndexFlatIP(d)         # o index é produto interno, mas busca pelo cosseno com os vetores já normalizados
-  index_target.add(embeddings)          # adiciona target ao index
+  index_target = IndexFlatIP(d)
+  index_target.add(embeddings)
+  
   # Save index
   logging.info(f'Done! Saving {index_target.ntotal} vector embeddings')
   output = 'out.index' if output is None else output
