@@ -12,7 +12,7 @@ def parse_args():
   parser.add_argument("-t", "--target", help="Code of the target language in the database.", required=True, dest='target')
   parser.add_argument("-m", "--model-name", help="Translation model's name.", required=True, dest='model_name')
   parser.add_argument("--sample", help="Sample size to take.", dest='sample', type=int)
-  parser.add_argument("-d", "--device", help="Device to run the models. Either 'gpu' or 'cpu'.", default="cpu", dest='device')
+  parser.add_argument("-d", "--device", help="Device (like 'cuda' | 'cpu') that should be used for computation.", default="cpu", dest='device')
   parser.add_argument("-o", "--output", help="Output path of the result.", dest='output_path')
   args = parser.parse_args()
   return args
@@ -33,7 +33,7 @@ def translate(path_db, path_index, source, target, device, model_name, sample, o
   logging.info(f'Loading models: {model_name} and LaBSE')
   tokenizer = MarianTokenizer.from_pretrained(model_name)
   translation_model = MarianMTModel.from_pretrained(model_name)
-  embeddings_model = load_embeddings_model()
+  embeddings_model = load_embeddings_model(device=device)
 
   # Inference
   logging.info(f'Translating {df_search.shape[0]} sentences')
