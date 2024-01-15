@@ -1,6 +1,6 @@
 import argparse
 from faiss import IndexFlatIP, write_index
-from utils import load_dataset_index, load_embeddings_model
+from utils import load_dataset, load_embeddings_model
 import logging
 
 def parse_args():
@@ -15,7 +15,7 @@ def parse_args():
 def index(path, target, sample, output):
   # Load dataset
   logging.info(f'Loading dataset from {path}')
-  df = load_dataset_index(path)
+  df = load_dataset(path)
   df = df[[target]]
   df_db = df.iloc[:sample] if sample is not None else df
   

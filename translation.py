@@ -1,6 +1,6 @@
 import argparse
 import logging
-from utils import load_faiss_index, load_dataset_index, load_embeddings_model
+from utils import load_faiss_index, load_dataset, load_embeddings_model
 from transformers import MarianMTModel, MarianTokenizer
 import pandas as pd
 
@@ -12,20 +12,21 @@ def parse_args():
   parser.add_argument("-t", "--target", help="Code of the target language in the database.", required=True, dest='target')
   parser.add_argument("-m", "--model-name", help="Translation model's name.", required=True, dest='model_name')
   parser.add_argument("--sample", help="Sample size to take.", dest='sample', type=int)
-  parser.add_argument("-e", "--environment", help="Environment to run the models. gpu or cpu.", default="cpu", dest='environment')
+  parser.add_argument("-d", "--device", help="Device to run the models. Either 'gpu' or 'cpu'.", default="cpu", dest='device')
   parser.add_argument("-o", "--output", help="Output path of the result.", dest='output_path')
   args = parser.parse_args()
   return args
 
-def translate(path_db, path_index, source, target, environment, model_name, sample, output_path):
+def translate(path_db, path_index, source, target, device, model_name, sample, output_path):
   # Load index
   logging.info(f'Loading FAISS index: {path_index}')
   index_target = load_faiss_index(path_index)
 
   # Load database
   logging.info(f'Loading text database: {path_db}')
-  df = load_dataset_index(path_db)
-  df = df [[source, target]]
+  dataset = load_dataset(path_db, db='all')
+  df = dataset['query'].to_pandas()[[source, target]]
+  df_index = dataset['index'].to_pandas()[[target]]
   df_search = df.iloc[:sample, :] if sample is not None else df
 
   # Load Models
@@ -39,7 +40,7 @@ def translate(path_db, path_index, source, target, environment, model_name, samp
   source = df_search[source].tolist()
   target_values = df_search[target].tolist()
   inputs = tokenizer(source, return_tensors="pt", padding=True)  
-  if environment == 'gpu': 
+  if device == 'gpu':
     inputs.to('cuda')
     translation_model.to('cuda')
   translated = translation_model.generate(**inputs)
@@ -60,7 +61,7 @@ def translate(path_db, path_index, source, target, environment, model_name, samp
   D, I = index_target.search(queries, k)
   results = []
   for row in I:
-    results.append(df.iloc[row][target].values[0])
+    results.append(df_index.iloc[row][target].values[0])
 
   # Save results
   result_df = pd.DataFrame([[w, x, y, z] for w, x, y, z in zip(source, target_values, translated_sentences, results)], columns=['source', 'target', 'translation', 'search_result'])
@@ -71,7 +72,7 @@ def translate(path_db, path_index, source, target, environment, model_name, samp
 def main():
   logging.basicConfig(level=logging.INFO)
   args = parse_args()
-  translate(args.path_db, args.path_index, args.source, args.target, args.environment, args.model_name, args.sample, args.output_path)
+  translate(args.path_db, args.path_index, args.source, args.target, args.device, args.model_name, args.sample, args.output_path)
 
 if __name__ == '__main__':
   main()
