@@ -8,7 +8,7 @@ def parse_args():
   parser.add_argument("-p", "--path", help="Database file path.", required=True, dest='path')
   parser.add_argument("-t", "--target", help="Code of the target language to index.", required=True, dest='target')
   parser.add_argument("-s", "--sample", help="Sample size to take.", dest='sample', type=int)
-  parser.add_argument("-d", "--device", "Device (like 'cuda' | 'cpu') that should be used for computation.", default="cpu", dest="device")
+  parser.add_argument("-d", "--device", help="Device (like 'cuda' | 'cpu') that should be used for computation.", default="cpu", dest="device")
   parser.add_argument("-o", "--output", help="Output index path.", dest='output')
   args = parser.parse_args()
   return args
