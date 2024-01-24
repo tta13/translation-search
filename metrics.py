@@ -43,12 +43,17 @@ def calculate_metrics(input_path, tgt_col, result_col, output_path, device):
   logging.info(f'Computing BLEURT')
   checkpoint = 'lucadiliello/BLEURT-20'
   config = BleurtConfig.from_pretrained(checkpoint)
-  model = BleurtForSequenceClassification.from_pretrained(checkpoint, config=config).to(device).half()
+  model = BleurtForSequenceClassification.from_pretrained(checkpoint, config=config).to(device)
+  if device == 'cuda':
+    model = model.half()
   tokenizer = BleurtTokenizer.from_pretrained(checkpoint)
   model.eval()
   bleurt_scores = []
   with torch.no_grad():
-    for refs, cands in tqdm(zip(chunks(references, 32), chunks(candidates, 32)), total=len(references)):
+    for refs, cands in tqdm(zip(chunks(references, 32), chunks(candidates, 32)), total=(len(references) // 32) + 1):
+      print('Refs', refs)
+
+      print('Cans', cands)
       inputs = tokenizer(refs, cands, padding='max_length', truncation=True, max_length=512, return_tensors='pt').to(device)
       res = model(**inputs).logits.flatten().tolist()
       bleurt_scores.extend(res)
