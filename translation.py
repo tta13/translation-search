@@ -1,6 +1,6 @@
 import argparse
 import logging
-from utils import load_faiss_index, load_dataset, load_embeddings_model
+from utils import load_faiss_index, load_dataset, load_embeddings_model, chunks
 from transformers import MarianMTModel, MarianTokenizer
 import pandas as pd
 import gc
@@ -20,11 +20,6 @@ def parse_args():
   parser.add_argument("-b", "--batch-start", help="Start processing batch.", default=0, dest='batch_start', type=int)
   args = parser.parse_args()
   return args
-
-def chunks(lst, n):
-  """Yield successive n-sized chunks from lst."""
-  for i in range(0, len(lst), n):
-    yield lst[i : i + n]
 
 def translate(path_db, path_index, source, target, device, model_name, sample, output_path, batch_start):
   # Load index
