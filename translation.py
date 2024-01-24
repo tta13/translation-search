@@ -39,7 +39,9 @@ def translate(path_db, path_index, source, target, device, model_name, sample, o
     logging.info('Using cuda')
     torch.cuda.empty_cache()
   tokenizer = MarianTokenizer.from_pretrained(model_name)
-  translation_model = MarianMTModel.from_pretrained(model_name).to(device).half()
+  translation_model = MarianMTModel.from_pretrained(model_name).to(device)
+  if device == 'cuda':
+    translation_model = translation_model.half()
   embeddings_model = load_embeddings_model(device=device)
 
 	# Inference
@@ -47,8 +49,8 @@ def translate(path_db, path_index, source, target, device, model_name, sample, o
   source = df_search[source].tolist()
   target_values = df_search[target].tolist()
 
-  for src_text_list in tqdm(list(chunks(source, 32))[batch_start:]):
-    inputs = tokenizer(src_text_list, return_tensors="pt", padding='max_length', truncation=True, max_length=512).to(device)
+  for src, tgt in tqdm(list(zip(chunks(source, 32), chunks(target_values, 32)))[batch_start:]):
+    inputs = tokenizer(src, return_tensors="pt", padding='max_length', truncation=True, max_length=512).to(device)
     res = translation_model.generate(**inputs)
 
     # Decoding output
@@ -68,7 +70,7 @@ def translate(path_db, path_index, source, target, device, model_name, sample, o
       results.append(df_index.iloc[row][target].values[0])
 
     # Save results
-    result_df = pd.DataFrame([[w, x, y, z] for w, x, y, z in zip(source, target_values, translated_sentences, results)], columns=['source', 'target', 'translation', 'search_result'])
+    result_df = pd.DataFrame([[w, x, y, z] for w, x, y, z in zip(src, tgt, translated_sentences, results)], columns=['source', 'target', 'translation', 'search_result'])
     output_path = 'result.csv' if output_path is None else output_path
     logging.info(f'Saving partial results in {output_path}')
     result_df.to_csv(output_path, sep='\t', index=False, mode='a')
