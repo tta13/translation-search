@@ -51,14 +51,11 @@ def calculate_metrics(input_path, tgt_col, result_col, output_path, device):
   bleurt_scores = []
   with torch.no_grad():
     for refs, cands in tqdm(zip(chunks(references, 32), chunks(candidates, 32)), total=(len(references) // 32) + 1):
-      print('Refs', refs)
-
-      print('Cans', cands)
       inputs = tokenizer(refs, cands, padding='max_length', truncation=True, max_length=512, return_tensors='pt').to(device)
       res = model(**inputs).logits.flatten().tolist()
       bleurt_scores.extend(res)
-  
-    df_in.iloc['bleurt'] = bleurt_scores
+
+    df_in['bleurt'] = bleurt_scores
     logging.info(f'Saving results in {output_path}')
     df_in.to_csv(output_path, sep='\t', index=False)
 
