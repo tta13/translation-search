@@ -6,7 +6,7 @@ For each dataset we are using the following translation scheme:
 ```
 a) DGT_TM: English to Spanish (en-es) -> Helsinki-NLP/opus-mt-en-es
 b) KDE: German to English (de-en) -> Helsinki-NLP/opus-mt-de-en
-c) Global Voices: Portuguese to English (pt-en) ->
+c) Global Voices: Portuguese to English (pt-en) -> Helsinki-NLP/opus-mt-ROMANCE-en
 d) United Nation: English to French (en-fr) -> Helsinki-NLP/opus-mt-en-fr
 ```
 
