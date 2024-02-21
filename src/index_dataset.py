@@ -9,11 +9,12 @@ def parse_args():
   parser.add_argument("-t", "--target", help="Code of the target language to index.", required=True, dest='target')
   parser.add_argument("-s", "--sample", help="Sample size to take.", dest='sample', type=int)
   parser.add_argument("-d", "--device", help="Device (like 'cuda' | 'cpu') that should be used for computation.", default="cpu", dest="device")
+  parser.add_argument("-m", "--model-name", help="Embeddings model name.", required=False, default='LaBSE', dest='model_name')
   parser.add_argument("-o", "--output", help="Output index path.", dest='output')
   args = parser.parse_args()
   return args
 
-def index(path, target, sample, output, device):
+def index(path, target, sample, output, device, model_name):
   # Load dataset
   logging.info(f'Loading dataset from {path}')
   df = load_dataset(path)
@@ -22,10 +23,12 @@ def index(path, target, sample, output, device):
   
   # Load model
   logging.info('Loading embeddings model')
-  model = load_embeddings_model(device=device)
+  model = load_embeddings_model(device=device, model_name=model_name)
+  if model_name=='intfloat/multilingual-e5-base':
+    df_db.loc[:, target] = 'query: ' + df_db[target]
   
   logging.info('Start creating embeddings')
-  embeddings = model.encode(df_db[target], batch_size=32, show_progress_bar=True)
+  embeddings = model.encode(df_db[target], batch_size=32, normalize_embeddings=True, show_progress_bar=True)
   _, d = embeddings.shape
   
   # Add vectors to FAISS
@@ -41,7 +44,7 @@ def index(path, target, sample, output, device):
 def main():
   logging.basicConfig(level=logging.INFO)
   args = parse_args()
-  index(args.path, args.target, args.sample, args.output, args.device)
+  index(args.path, args.target, args.sample, args.output, args.device, args.model_name)
 
 if __name__ == '__main__':
   main()
