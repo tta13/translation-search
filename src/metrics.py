@@ -28,7 +28,7 @@ def calculate_metrics(input_path, tgt_col, result_col, output_path, device):
   output_path = f'{input_path.split(".")[0]}_scored.csv' if output_path is None else output_path
 
   logging.info(f'Reading dataset {input_path}')
-  df_in = pd.read_csv(input_path, sep='\t')
+  df_in = pd.read_csv(input_path, sep='\t').dropna(subset=[tgt_col, result_col])
 
   references=df_in[tgt_col].tolist()
   candidates=df_in[result_col].tolist()
